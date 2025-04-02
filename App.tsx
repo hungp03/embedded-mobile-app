@@ -2,7 +2,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Icon } from '@ant-design/react-native';
+import { Ionicons } from '@expo/vector-icons'; 
 import { CurrentPredictionScreen } from './src/screens/CurrentPredictionScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { StyleSheet } from 'react-native';
@@ -16,15 +16,16 @@ export default function App() {
         <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
-
+              let iconName: keyof typeof Ionicons.glyphMap;
               if (route.name === 'Kết quả hiện tại') {
-                iconName = 'check-circle';
+                iconName = 'checkmark-circle';
               } else if (route.name === 'Lịch sử') {
-                iconName = 'clock-circle';
+                iconName = 'time';
+              } else {
+                iconName = 'help';
               }
 
-              return <Icon name={iconName} size={size} color={color} />;
+              return <Ionicons name={iconName} size={size} color={color} />;
             },
             tabBarActiveTintColor: '#1890ff',
             tabBarInactiveTintColor: 'gray',
