@@ -4,7 +4,7 @@ import { Card, Text, Progress } from '@ant-design/react-native';
 import { rtdb } from '../../firebaseConfig';
 import { ref, onValue } from 'firebase/database';
 
-export const HistoryScreen = () => {
+export const History = () => {
     interface HistoryItem {
         id: string;
         modelName: string;
@@ -59,7 +59,10 @@ export const HistoryScreen = () => {
                     <Text style={styles.modelName}>Mô hình: {item.modelName}</Text>
                     <Text style={styles.result}>Kết quả: {item.result}</Text>
                     <View style={styles.confidenceContainer}>
-                        <Text>Độ tin cậy:</Text>
+                        <Text>
+                            Độ tin cậy: {((item.confidence ?? 0) * 100).toFixed(2)}%
+                        </Text>
+
                         <Progress percent={item.confidence * 100} style={styles.progress} />
                     </View>
                     <Text style={styles.timestamp}>

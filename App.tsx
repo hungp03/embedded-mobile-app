@@ -3,8 +3,8 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons'; 
-import { CurrentPredictionScreen } from './src/screens/CurrentPredictionScreen';
-import { HistoryScreen } from './src/screens/HistoryScreen';
+import { CurrentPrediction } from './src/screens/CurrentPrediction';
+import { History} from './src/screens/History';
 import { StyleSheet } from 'react-native';
 
 const Tab = createBottomTabNavigator();
@@ -33,14 +33,14 @@ export default function App() {
         >
           <Tab.Screen
             name="Kết quả hiện tại"
-            component={CurrentPredictionScreen}
+            component={CurrentPrediction}
             options={{
               headerTitle: 'Kết quả dự đoán',
             }}
           />
           <Tab.Screen
             name="Lịch sử"
-            component={HistoryScreen}
+            component={History}
             options={{
               headerTitle: 'Lịch sử dự đoán',
             }}

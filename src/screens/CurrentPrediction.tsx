@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Card, Text, Progress } from '@ant-design/react-native';
-import { ref, onValue } from 'firebase/database';
-import { rtdb } from '../../firebaseConfig';
 
-export const CurrentPredictionScreen = () => {
-    interface Prediction {
-        id: string;
-        modelName?: string;
-        result?: string;
-        confidence?: number;
-        lastUpdated?: Date;
-    }
+// Dùng biến môi trường để lấy URL Realtime Database
+const DATABASE_URL = `${process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL}/predictions/current.json`;
 
+interface Prediction {
+    id: string;
+    modelName?: string;
+    result?: string;
+    confidence?: number;
+    lastUpdated?: Date;
+}
+
+export const CurrentPrediction = () => {
     const [prediction, setPrediction] = useState<Prediction | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -20,35 +21,40 @@ export const CurrentPredictionScreen = () => {
     useEffect(() => {
         setLoading(true);
         setError(null);
-        const dbRef = ref(rtdb, 'predictions/current');
 
-        // Lắng nghe thay đổi real-time của document
-        const unsubscribe = onValue(dbRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                console.log(data)
-                const lastUpdatedDate = data.timestamp || new Date();
-    
-                setPrediction({
-                    ...data,
-                    lastUpdated: lastUpdatedDate,
-                });
-                setError(null); 
-            } else {
-                console.log("No such data!");
-                setPrediction(null); 
-                setError("Không tìm thấy dữ liệu dự đoán hiện tại.");
+        const fetchPrediction = async () => {
+            try {
+                const res = await fetch(DATABASE_URL);
+                if (!res.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await res.json();
+
+                if (data) {
+                    setPrediction({
+                        ...data,
+                        lastUpdated: data.timestamp ? new Date(data.timestamp) : new Date(),
+                    });
+                    setError(null);
+                } else {
+                    setPrediction(null);
+                    setError("Không tìm thấy dữ liệu dự đoán hiện tại.");
+                }
+            } catch (err) {
+                console.error("Error fetching prediction:", err);
+                setError("Lỗi khi tải dữ liệu dự đoán.");
+                setPrediction(null);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
-        }, (err) => {
-            console.error("Error fetching prediction: ", err);
-            setError("Lỗi khi tải dữ liệu dự đoán.");
-            setLoading(false);
-            setPrediction(null);
-        });
-    
-        return () => unsubscribe(); // Hủy lắng nghe khi component bị unmount
+        };
+
+        fetchPrediction();
+        const interval = setInterval(fetchPrediction, 2000);
+
+        return () => clearInterval(interval);
     }, []);
+
     if (loading) {
         return (
             <View style={[styles.container, styles.center]}>
@@ -62,7 +68,6 @@ export const CurrentPredictionScreen = () => {
         return (
             <View style={[styles.container, styles.center]}>
                 <Text style={{ color: 'red' }}>{error}</Text>
-                {/*  */}
             </View>
         );
     }
@@ -84,26 +89,20 @@ export const CurrentPredictionScreen = () => {
                 />
                 <Card.Body>
                     <View style={styles.content}>
-                        {/* Sử dụng dữ liệu từ state 'prediction' */}
                         <Text style={styles.modelName}>Mô hình: {prediction.modelName || 'N/A'}</Text>
                         <Text style={styles.result}>Kết quả: {prediction.result || 'N/A'}</Text>
                         <View style={styles.confidenceContainer}>
-                            <Text>Độ tin cậy:</Text>
-                            <Progress      
+                            <Text>
+                                Độ tin cậy: {((prediction.confidence ?? 0) * 100).toFixed(2)}%
+                            </Text>
+                            <Progress
                                 percent={typeof prediction.confidence === 'number' ? prediction.confidence * 100 : 0}
                                 style={styles.progress}
                             />
-                            <Text style={{ textAlign: 'right', marginTop: 4, color: '#666' }}>
-                                {typeof prediction.confidence === 'number' ? `${(prediction.confidence * 100).toFixed(0)}%` : '0%'}
-                            </Text>
                         </View>
-                        <Text style={styles.timestamp}>
-                            Cập nhật lúc: {prediction.lastUpdated instanceof Date ? prediction.lastUpdated.toLocaleString() : 'N/A'}
-                        </Text>
                     </View>
                 </Card.Body>
             </Card>
-            {/*  */}
         </View>
     );
 };
@@ -114,7 +113,7 @@ const styles = StyleSheet.create({
         padding: 16,
         backgroundColor: '#f5f5f5',
     },
-    center: { 
+    center: {
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -122,7 +121,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     content: {
-        padding: 12, 
+        padding: 12,
     },
     modelName: {
         fontSize: 18,
@@ -143,7 +142,7 @@ const styles = StyleSheet.create({
         height: 8,
     },
     timestamp: {
-        marginTop: 8, 
+        marginTop: 8,
         color: '#888',
         fontSize: 12,
         textAlign: 'right',
